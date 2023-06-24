@@ -62,11 +62,53 @@ customer_list = [["Harrison", "Chase"],
 
 # View detailed outputs of the chains
 
-import langchain
-langchain.debug=True
-agent.run(f"""Replace all occurrences of the letter 'e' with \
-the letter 'z' and then sort these customers by \
-last name and then first name \
-and print the output: {customer_list}""") 
-langchain.debug=False
+# import langchain
+# langchain.debug=True
+# agent.run(f"""Replace all occurrences of the letter 'e' with \
+# the letter 'z' and then sort these customers by \
+# last name and then first name \
+# and print the output: {customer_list}""") 
+# langchain.debug=False
 
+# Define your own tool
+
+from langchain.agents import tool
+from datetime import date
+from datetime import timedelta
+
+@tool
+def time(text: str) -> str:
+    """Returns todays date, use this for any \
+    questions related to knowing todays date. \
+    The input should always be an empty string, \
+    and this function will always return todays \
+    date - any date mathmatics should occur \
+    outside this function."""
+    return str(date.today())
+
+@tool
+def nextweek_time(text: str) -> str:
+    """Returns date one week from today, use this for any \
+    questions related to knowing the date one week from today. \
+    The input should always be an empty string, \
+    and this function will always return the date one week \
+    from today - any date mathmatics should occur \
+    outside this function."""
+    return str(date.today() + timedelta(days=7))
+
+
+agent= initialize_agent(
+    tools + [time, nextweek_time], 
+    llm, 
+    agent=AgentType.CHAT_ZERO_SHOT_REACT_DESCRIPTION,
+    handle_parsing_errors=True,
+    verbose = True)
+
+# Note:
+# The agent will sometimes come to the wrong conclusion (agents are a work in progress!).
+# If it does, please try running it again.
+
+try:
+    result = agent("whats the date seven days from now?") 
+except: 
+    print("exception on external access")
